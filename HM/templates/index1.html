@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Analysis Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>🏎️ F1 Analysis Dashboard</h1>
+    </header>
+
+    <main>
+        <!-- ✅ Position Changes -->
+        <section>
+            <h2>📊 Position Changes</h2>
+            <label for="year">Year:</label>
+            <select id="year">
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+            </select>
+
+            <label for="race">Race:</label>
+            <select id="race">
+                <option value="Bahrain">Bahrain</option>
+                <option value="Australian">Australian</option>
+                <option value="Japanese">Japanese</option>
+            </select>
+
+            <label for="session">Session:</label>
+            <select id="session">
+                <option value="FP1">FP1</option>
+                <option value="FP2">FP2</option>
+                <option value="FP3">FP3</option>
+                <option value="Quali">Quali</option>
+                <option value="Race">Race</option>
+            </select>
+
+            <button onclick="getPositionChanges()">Get Position Changes</button>
+            <br>
+            <img id="positionChart" src="" alt="Position Chart will appear here">
+        </section>
+
+        <!-- ✅ Driver Lap Times -->
+        <section>
+            <h2>⏱ Lap Times</h2>
+            <label for="driver">Driver Code (e.g., VER, HAM, 44):</label>
+            <input type="text" id="driver" placeholder="Enter driver code">
+            
+            <button onclick="getLapTimes()">Get Lap Times</button>
+            <br>
+            <img id="lapTimeChart" src="" alt="Lap Times Chart will appear here">
+        </section>
+
+        <!-- ✅ Lap Time Distribution (Fixed) -->
+        <section>
+            <h2>📊 Lap Time Distribution</h2>
+            <label for="driverDist">Driver Code (e.g., VER, HAM, 44):</label>
+            <input type="text" id="driverDist" placeholder="Enter driver code">
+            
+            <button onclick="getLapDistribution()">Get Lap Distribution</button>
+            <br>
+            <img id="lapDistributionChart" src="" alt="Lap Distribution Chart will appear here">
+        </section>
+    </main>
+
+    <script>
+        function getPositionChanges() {
+            let year = document.getElementById('year').value;
+            let race = document.getElementById('race').value;
+            let session = document.getElementById('session').value;
+
+            axios.get(`/position?year=${year}&race=${race}&session=${session}`)
+                .then(response => {
+                    document.getElementById("positionChart").src = response.data.image_url;
+                })
+                .catch(error => {
+                    alert("❌ Could not fetch position data.");
+                });
+        }
+
+        function getLapTimes() {
+            let year = document.getElementById('year').value;
+            let race = document.getElementById('race').value;
+            let session = document.getElementById('session').value;
+            let driver = document.getElementById('driver').value;
+
+            if (!driver) {
+                alert("❌ Please enter a driver code.");
+                return;
+            }
+
+            axios.get(`/laptimes?year=${year}&race=${race}&session=${session}&driver=${driver}`)
+                .then(response => {
+                    document.getElementById("lapTimeChart").src = response.data.image_url;
+                })
+                .catch(error => {
+                    alert("❌ Could not fetch lap times.");
+                });
+        }
+
+        function getLapDistribution() {
+            let year = document.getElementById('year').value;
+            let race = document.getElementById('race').value;
+            let session = document.getElementById('session').value;
+            let driver = document.getElementById('driverDist').value;
+
+            if (!driver) {
+                alert("❌ Please enter a driver code.");
+                return;
+            }
+
+            axios.get(`/lapdistribution?year=${year}&race=${race}&session=${session}&driver=${driver}`)
+                .then(response => {
+                    if (response.data.image_url) {
+                        document.getElementById("lapDistributionChart").src = response.data.image_url;
+                    } else {
+                        alert("❌ No data found for this driver.");
+                    }
+                })
+                .catch(error => {
+                    alert("❌ Could not fetch lap distribution.");
+                });
+        }
+    </script>
+</body>
+</html>
+function predictLapTimes() {
+    let startLap = document.getElementById("startLap").value;
+    let numLaps = document.getElementById("numLaps").value;
+    let compound = document.getElementById("compound").value;
+
+    axios.post("/predict", {
+        start_lap: startLap,
+        num_laps: numLaps,
+        compound: compound
+    })
+    .then(response => {
+        console.log("📥 Prediction Response:", response.data);
+        let resultElement = document.getElementById("predictionResults");
+        resultElement.innerHTML = "";
+
+        response.data.lap_times.forEach(lap => {
+            let listItem = document.createElement("li");
+            listItem.innerText = `Lap ${lap.lap}: ${lap.time}`;
+            resultElement.appendChild(listItem);
+        });
+    })
+    .catch(error => {
+        alert("❌ Prediction failed");
+    });
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Analysis Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>🏎️ F1 Analysis Dashboard</h1>
+    </header>
+
+    <main>
+        <!-- ✅ Predict Lap Times -->
+        <section>
+            <h2> Predict Lap Times</h2>
+            <label>Start Lap:</label>
+            <input type="number" id="startLap" value="1">
+
+            <label>Number of Laps:</label>
+            <input type="number" id="numLaps" value="5">
+
+            <label>Tire Compound:</label>
+            <select id="compound">
+                <option value="SOFT">Soft</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HARD">Hard</option>
+            </select>
+
+            <button onclick="predictLapTimes()">Predict</button>
+
+            <h3>Predicted Lap Times</h3>
+            <ul id="predictionResults"></ul>
+        </section>
+
+        <!-- ✅ Position Changes -->
+        <section>
+            <h2>📊 Position Changes</h2>
+            <label for="year">Year:</label>
+            <select id="year">
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+            </select>
+
+            <label for="race">Race:</label>
+            <select id="race">
+                <option value="Bahrain">Bahrain</option>
+                <option value="Australian">Australian</option>
+                <option value="Japanese">Japanese</option>
+            </select>
+
+            <label for="session">Session:</label>
+            <select id="session">
+                <option value="FP1">FP1</option>
+                <option value="FP2">FP2</option>
+                <option value="FP3">FP3</option>
+                <option value="Quali">Quali</option>
+                <option value="Race">Race</option>
+            </select>
+            <button onclick="getPositionChanges()">Get Position Changes</button>
+            <img id="positionChart" src="" alt="Position Chart will appear here">
+            <h1>Get Lap time</h1>
+            <select id="Lapyear">
+                <option value="2020">2020</option>
+                <option value="2021">2021</option>
+                <option value="2022">2022</option>
+            </select>
+            <select id="Laprace">Select Race
+                <option value="Bahrain">Bahrain</option>
+                <option value="Australian">Australian</option>
+                <option value="Japanese">Japanese</option>
+            </select>
+            <select id="Lapsession">Select session
+                <option id="FP1">FP1</option>
+                <option id="FP2">FP2</option>
+                <option id="FP3">FP3</option>
+            </select>
+            <button onclick="loadPlot()">Show Lap Times</button>
+            <div id="lap-time-plot">
+                <img id="plotimg" src="" alt="Lap Time Plot will appear here" style="display: none;">
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        function loadPlot(){
+            let year = document.getElementById('Lapyear').value;
+            let driver = document.getElementById('Lapdriver').value;
+            let race = document.getElementById('Laprace').value;
+            let session = document.getElementById('Lapsession').value;
+            let ImgPlot = document.getElementById('plotimg');
+            ImgPlot.src = `/laptimes?year=${year}&driver=${driver}&race=${race}`;
+            ImgPlot.style.display = 'block';
+        }
+        function predictLapTimes() {
+            let startLap = document.getElementById("startLap").value;
+            let numLaps = document.getElementById("numLaps").value;
+            let compound = document.getElementById("compound").value;
+
+            axios.post("/predict", {
+                start_lap: startLap,
+                num_laps: numLaps,
+                compound: compound
+            })
+            .then(response => {
+                console.log("📥 Prediction Response:", response.data);
+                let resultElement = document.getElementById("predictionResults");
+                resultElement.innerHTML = "";
+
+                response.data.lap_times.forEach(lap => {
+                    let listItem = document.createElement("li");
+                    listItem.innerText = `Lap ${lap.lap}: ${lap.time}`;
+                    resultElement.appendChild(listItem);
+                });
+            })
+            .catch(error => {
+                alert("❌ Prediction failed");
+            });
+        }
+
+        function getPositionChanges() {
+            let year = document.getElementById('year').values;
+            let race = document.getElementById('race').values;
+            let session = document.getElementById('session').values;
+            axios.get(`/position?year=${year}&race=${race}&session=${session}`)
+                .then(response => {
+                    document.getElementById("positionChart").src = response.data.image_url;
+                })
+                .catch(error => {
+                    alert("❌ Could not fetch position data.");
+                });
+        }
+    </script>
+</body>
+</html>
